@@ -18,11 +18,62 @@
 
 /**
  * The 'pre' function that is executed before the HTML is rendered
- * @param payload The current payload of processing pipeline
- * @param payload.content The content
+ * @param context The current context of processing pipeline
+ * @param context.content The content
  */
-function pre(payload) {
-  payload.content.time = `${new Date()}`;
+
+const toHAST = require('mdast-util-to-hast');
+const toHTML = require('hast-util-to-html');
+
+function wrap(document, selector, classname) {
+  const elems = document.querySelectorAll(selector);
+  const div = document.createElement("div");
+  div.className = classname;
+  elems.forEach((el, index) => {
+    div.appendChild(el.cloneNode(true));
+    if (index == 0) {
+      el.parentNode.removeChild(el);
+    } else {
+      el.parentNode.replaceChild(div, el);
+    }
+  });
+}
+
+function classify(document, selector, classname, level) {
+  const elems = document.querySelectorAll(selector);
+  elems.forEach((el) => {
+    let l = level;
+    while (l) {
+      el = el.parentNode;
+      l--;
+    }
+    el.className = classname;
+  });
+}
+
+function pre(context) {
+  context.content.meta.template = context.content.meta.template ? context.content.meta.template : 'default';
+
+  let doc = "";
+
+  /* workaround until sections in document are fixed */
+  context.content.sections.forEach((sec) => {
+    sec.innerHTML = toHTML(toHAST(sec));
+    doc += "<section>" + sec.innerHTML + "</section>";
+  });
+
+  /* shouldn't have to go through body? */
+  context.content.document.body.innerHTML = doc;
+
+  const document = context.content.document;
+  classify(document, "section", "copy");
+  classify(document, "section>:first-child>img", "image", 2);
+
+  /* header image? */
+  if (document.querySelector("section:first-child p:first-child>img")) {
+    classify(document, "section:first-child", "title");
+    wrap(document, "section:first-child :nth-child(1n+2)", "header");
+  }
 }
 
 module.exports.pre = pre;

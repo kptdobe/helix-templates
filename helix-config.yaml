@@ -11,5 +11,5 @@ definitions:
 strains:
   - name: default
     code: *defaultRepo
-    content: *defaultRepo
+    content: https://github.com/kptdobe/helix-templates-content.git#master
     static: *defaultRepo
