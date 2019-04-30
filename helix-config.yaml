@@ -6,7 +6,7 @@ version: 1
 definitions:
   defaults:
     # default repository. set to git remote repository before deployment
-    - &defaultRepo "http://localhost/local/default.git"
+    - &defaultRepo https://github.com/kptdobe/helix-templates.git#master
 
 strains:
   - name: default
