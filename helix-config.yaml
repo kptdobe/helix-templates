@@ -12,4 +12,4 @@ strains:
   - name: default
     code: *defaultRepo
     content: https://github.com/kptdobe/helix-templates-content.git#master
-    static: *defaultRepo
+    static: https://github.com/kptdobe/helix-templates.git/htdocs#master
