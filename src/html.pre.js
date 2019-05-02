@@ -18,25 +18,29 @@
 
 /**
  * The 'pre' function that is executed before the HTML is rendered
- * @param context The current context of processing pipeline
- * @param context.content The content
+ * @param payload The current payload of processing pipeline
+ * @param payload.content The content
  */
 
 const toHAST = require('mdast-util-to-hast');
 const toHTML = require('hast-util-to-html');
 
+function wrapNodes(newparent, elems) {
+  elems.forEach((el, index) => {
+    newparent.appendChild(el.cloneNode(true));
+    if (index == 0) {
+      el.parentNode.replaceChild(newparent, el);
+    } else {
+      el.parentNode.removeChild(el);
+    }
+  });
+}
+
 function wrap(document, selector, classname) {
   const elems = document.querySelectorAll(selector);
   const div = document.createElement("div");
   div.className = classname;
-  elems.forEach((el, index) => {
-    div.appendChild(el.cloneNode(true));
-    if (index == 0) {
-      el.parentNode.removeChild(el);
-    } else {
-      el.parentNode.replaceChild(div, el);
-    }
-  });
+  wrapNodes(div, elems);
 }
 
 function classify(document, selector, classname, level) {
@@ -51,21 +55,37 @@ function classify(document, selector, classname, level) {
   });
 }
 
-function pre(context) {
-  context.content.meta.template = context.content.meta.template ? context.content.meta.template : 'default';
+function pre(payload) {
+  payload.content.meta.template = payload.content.meta.template ? payload.content.meta.template : 'default';
 
-  let doc = "";
+  const document = payload.content.document;
 
   /* workaround until sections in document are fixed */
-  context.content.sections.forEach((sec) => {
-    sec.innerHTML = toHTML(toHAST(sec));
-    doc += "<section>" + sec.innerHTML + "</section>";
+  let currentCollection = [];
+  let sections = []
+
+  /* prepare wrapping */
+  document.body.childNodes.forEach((child) => {
+    if (child.tagName == "HR") {
+      sections.push(currentCollection);
+      currentCollection = [];
+    } else {
+      currentCollection.push(child);
+    }
   });
 
-  /* shouldn't have to go through body? */
-  context.content.document.body.innerHTML = doc;
+  sections.push(currentCollection);
 
-  const document = context.content.document;
+  /* replace sections */
+  sections.forEach((el) => {
+    wrapNodes(document.createElement("section"), el);
+  })
+
+  /* remove HRs */
+  document.querySelectorAll("body>hr").forEach((el) => {
+    el.parentNode.removeChild(el)
+  });
+
   classify(document, "section", "copy");
   classify(document, "section>:first-child>img", "image", 2);
 
