@@ -13,3 +13,4 @@ strains:
     code: *defaultRepo
     content: https://github.com/kptdobe/helix-templates-content.git#master
     static: https://github.com/kptdobe/helix-templates.git/htdocs#master
+    package: acapt/8d1126b9e84866306c01dff93d64fcdfcdac558a
